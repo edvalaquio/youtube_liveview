@@ -1,0 +1,22 @@
+<section class="phx-hero">
+  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
+  <p>Peace of mind from prototype to production</p>
+
+  <form phx-submit="load-video">
+    <input type="text" name="data" value="<%= @data %>" placeholder="Embed a video" autocomplete="off"/>
+    <button type="submit" phx-disable-with="Embedding...">Embed a video</button>
+  </form>
+  <%= if @embedded_link do %>
+    <iframe
+      width="560"
+      height="315"
+      src="<%= @embedded_link %>"
+      title="YouTube video player"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+      autoplay="false"
+    >
+    </iframe>
+  <% end %>
+</section>

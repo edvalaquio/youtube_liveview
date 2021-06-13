@@ -18,6 +18,7 @@ defmodule YoutubeLiveviewWeb.Router do
     pipe_through :browser
 
     live "/", PageLive, :index
+    live "/video", VideoLive, :index
   end
 
   # Other scopes may use custom stacks.
