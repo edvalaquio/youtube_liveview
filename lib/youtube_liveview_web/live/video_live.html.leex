@@ -1,7 +1,7 @@
 <section class="phx-hero">
   <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
   <p>Peace of mind from prototype to production</p>
-
+  <div id="cool-dom-bro" phx-hook="Sample"></div>
   <form phx-submit="load-video">
     <input type="text" name="data" value="<%= @data %>" placeholder="Embed a video" autocomplete="off"/>
     <button type="submit" phx-disable-with="Embedding...">Embed a video</button>
