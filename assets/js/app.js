@@ -29,6 +29,12 @@ Hooks.Sample = {
                 console.log(`Received the following action in the payload - ${action}`)
             }
         )
+        this.handleEvent(
+            "load-video",
+            () => {
+                console.log("Load-video event called")
+            }
+        )
     }
 }
 
@@ -48,3 +54,38 @@ liveSocket.connect()
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
 
+var player;
+window.onYouTubeIframeAPIReady = () => {
+    console.log("HELLO WORLD")
+    player = new YT.Player('existing-iframe-example', {
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+        }
+    });
+}
+function onPlayerReady(event) {
+    document.getElementById('existing-iframe-example').style.borderColor = '#FF6D00';
+}
+function changeBorderColor(playerStatus) {
+    var color;
+    if (playerStatus == -1) {
+        color = "#37474F"; // unstarted = gray
+    } else if (playerStatus == 0) {
+        color = "#FFFF00"; // ended = yellow
+    } else if (playerStatus == 1) {
+        color = "#33691E"; // playing = green
+    } else if (playerStatus == 2) {
+        color = "#DD2C00"; // paused = red
+    } else if (playerStatus == 3) {
+        color = "#AA00FF"; // buffering = purple
+    } else if (playerStatus == 5) {
+        color = "#FF6DOO"; // video cued = orange
+    }
+    if (color) {
+        document.getElementById('existing-iframe-example').style.borderColor = color;
+    }
+}
+function onPlayerStateChange(event) {
+    changeBorderColor(event.data);
+}

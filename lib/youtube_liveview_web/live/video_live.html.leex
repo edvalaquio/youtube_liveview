@@ -1,22 +1,37 @@
 <section class="phx-hero">
-  <h1><%= gettext "Welcome to %{name}!", name: "Phoenix" %></h1>
+  <h1>
+    <%= gettext "Welcome to %{name}!" , name: "Phoenix" %>
+  </h1>
   <p>Peace of mind from prototype to production</p>
-  <div id="cool-dom-bro" phx-hook="Sample"></div>
   <form phx-submit="load-video">
-    <input type="text" name="data" value="<%= @data %>" placeholder="Embed a video" autocomplete="off"/>
+    <input type="text" name="data" value="<%= @data %>" placeholder="Embed a video" autocomplete="off" />
     <button type="submit" phx-disable-with="Embedding...">Embed a video</button>
   </form>
-  <%= if @embedded_link do %>
-    <iframe
-      width="560"
-      height="315"
-      src="<%= @embedded_link %>"
-      title="YouTube video player"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-      autoplay="false"
-    >
-    </iframe>
-  <% end %>
+  <div id="cool-dom-bro" phx-hook="Sample">
+    <%= case @embedded_link do %>
+      <% "" -> %>
+        <iframe
+          id="existing-iframe-example"
+          width="640"
+          height="360"
+          src="https://www.youtube.com/embed/M7lc1UVf-VE?enablejsapi=1"
+          frameborder="0"
+          style="border: solid 4px #37474F"
+          enablejsapi="true"
+        >
+        </iframe>
+      <% _ -> %>
+        <iframe
+          phx-hook="Sample"
+          id="existing-iframe-example"
+          width="640"
+          height="360"
+          src="<%= @embedded_link %>?enablejsapi=1"
+          frameborder="0"
+          style="border: solid 4px #37474F"
+          enablejsapi="true"
+        >
+        </iframe>
+    <% end %>
+  </div>
 </section>

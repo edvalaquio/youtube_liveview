@@ -9,7 +9,11 @@ defmodule YoutubeLiveviewWeb.VideoLive do
 
     assigns = [data: "", embedded_link: ""]
 
-    {:ok, assign(socket, assigns)}
+    {
+      :ok,
+      assign(socket, assigns)
+      |> push_event("load-video", %{})
+    }
   end
 
   @impl true
@@ -21,9 +25,18 @@ defmodule YoutubeLiveviewWeb.VideoLive do
     {
       :noreply,
       socket
-      |> push_event("sample", %{action: "play-video"})
+      |> push_event("load-video", %{})
       |> assign(assigns)
     }
+  end
+
+  @impl true
+  def handle_event("play-video", _unsigned_params, socket) do
+    YoutubeLiveviewWeb.Endpoint.broadcast_from(self(), @topic, "play-video", %{
+      action: "play-video"
+    })
+
+    {:noreply, push_event(socket, "sample", %{action: "play-video"})}
   end
 
   @impl true
@@ -38,7 +51,7 @@ defmodule YoutubeLiveviewWeb.VideoLive do
     {
       :noreply,
       socket
-      |> push_event("sample", %{action: "play-video"})
+      |> push_event("load-video", %{})
       |> assign(assigns)
     }
   end
@@ -52,11 +65,16 @@ defmodule YoutubeLiveviewWeb.VideoLive do
         },
         socket
       ) do
-    {:noreply, assign(socket, assigns)}
+    {
+      :noreply,
+      socket
+      |> push_event("sample", %{action: "play-video"})
+      |> assign(assigns)
+    }
   end
 
   defp create_embedded_link(data) do
-    case Regex.run(~r/[\d\w]{11}/, data) do
+    case Regex.run(~r/[\d\w-]{11}/, data) do
       [match] -> "https://www.youtube.com/embed/#{match}"
       nil -> ""
     end
