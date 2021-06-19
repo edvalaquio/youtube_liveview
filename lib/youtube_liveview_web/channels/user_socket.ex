@@ -2,7 +2,7 @@ defmodule YoutubeLiveviewWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  # channel "room:*", YoutubeLiveviewWeb.RoomChannel
+  channel "room:*", YoutubeLiveviewWeb.RoomChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

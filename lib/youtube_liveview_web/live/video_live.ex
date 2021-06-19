@@ -1,18 +1,18 @@
 defmodule YoutubeLiveviewWeb.VideoLive do
   use YoutubeLiveviewWeb, :live_view
 
-  @topic "deployments"
-
   @impl true
   def mount(_params, _session, socket) do
-    YoutubeLiveviewWeb.Endpoint.subscribe(@topic)
+    YoutubeLiveviewWeb.Endpoint.subscribe("room:abc123")
 
-    assigns = [data: "", embedded_link: ""]
+    assigns = [
+      data: "",
+      embedded_link: create_embedded_link("https://www.youtube.com/watch?v=0eIY5b0RKE0")
+    ]
 
     {
       :ok,
       assign(socket, assigns)
-      |> push_event("load-video", %{})
     }
   end
 
@@ -20,56 +20,53 @@ defmodule YoutubeLiveviewWeb.VideoLive do
   def handle_event("load-video", %{"data" => data}, socket) do
     assigns = [data: data, embedded_link: create_embedded_link(data)]
 
-    YoutubeLiveviewWeb.Endpoint.broadcast_from(self(), @topic, "load-video", assigns)
+    YoutubeLiveviewWeb.Endpoint.broadcast("room:abc123", "load-client-video", assigns)
 
-    {
-      :noreply,
-      socket
-      |> push_event("load-video", %{})
-      |> assign(assigns)
-    }
+    {:noreply, assign(socket, assigns)}
   end
 
   @impl true
-  def handle_event("play-video", _unsigned_params, socket) do
-    YoutubeLiveviewWeb.Endpoint.broadcast_from(self(), @topic, "play-video", %{
-      action: "play-video"
+  def handle_event("play-video", _assigns, socket) do
+    YoutubeLiveviewWeb.Endpoint.broadcast("room:abc123", "broadcast-playback-event", %{
+      action: "play"
     })
 
-    {:noreply, push_event(socket, "sample", %{action: "play-video"})}
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("pause-video", _assigns, socket) do
+    YoutubeLiveviewWeb.Endpoint.broadcast("room:abc123", "broadcast-playback-event", %{
+      action: "pause"
+    })
+
+    {:noreply, socket}
   end
 
   @impl true
   def handle_info(
-        %{
-          topic: @topic,
-          event: "load-video",
+        %Phoenix.Socket.Broadcast{
+          event: "load-client-video",
           payload: assigns
+        },
+        socket
+      ) do
+    {:noreply, assign(socket, assigns)}
+  end
+
+  @impl true
+  def handle_info(
+        %Phoenix.Socket.Broadcast{
+          event: "broadcast-playback-event",
+          payload: payload
         },
         socket
       ) do
     {
       :noreply,
       socket
-      |> push_event("load-video", %{})
-      |> assign(assigns)
-    }
-  end
-
-  @impl true
-  def handle_info(
-        %{
-          topic: @topic,
-          event: "play-video",
-          payload: assigns
-        },
-        socket
-      ) do
-    {
-      :noreply,
-      socket
-      |> push_event("sample", %{action: "play-video"})
-      |> assign(assigns)
+      # This will send to the client's browser and will trigger the video to be played
+      |> push_event("client-playback-event", payload)
     }
   end
 
