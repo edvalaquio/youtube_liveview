@@ -27,6 +27,17 @@ window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 // FIXME: Place in a separate file
 let Hooks = {}
 Hooks.Sample = {
+    clearPlaybackInterval() { clearInterval(this.playbackInterval) },
+    getPlaybackInterval() { return this.playbackInterval },
+    setPlaybackInterval() {
+        this.playbackInterval = setInterval(
+            () => {
+                this.pushEvent(
+                    "current-time-video",
+                    { "current_time": this.getPlayer().getCurrentTime() },
+                )
+            }, 1000)
+    },
     getPlayer() { return this.player },
     setPlayer() {
         this.player = new YT.Player("existing-iframe-example");
@@ -41,30 +52,39 @@ Hooks.Sample = {
 
             let color;
             switch (playerStatus) {
-                case -1:
+                case YT.PlayerState.UNSTARTED:
                     color = "#37474F"; // unstarted = gray
                     break;
-                case 0:
+                case YT.PlayerState.ENDED:
                     color = "#FFFF00"; // ended = yellow
                     break;
-                case 1:
+                case YT.PlayerState.PLAYING:
                     // NOTE: We can use this video state to pause and play videos.
                     // pros: No need to create custom buttons
                     // cons: Longer delay in playing videos
                     // this.pushEvent("play-video", {});
                     color = "#33691E"; // playing = green
+                    // this.playbackInterval = setInterval(
+                    //     () => {
+                    //         // console.log(this.getPlayer().getCurrentTime())
+                    //         this.pushEvent("current-time-video", { "current_time": this.getPlayer().getCurrentTime() })
+                    //     }, 1000)
+                    this.setPlaybackInterval();
                     break;
-                case 2:
+                case YT.PlayerState.PAUSED:
                     // NOTE: We can use this video state to pause and play videos.
                     // pros: No need to create custom buttons
                     // cons: Longer delay in playing videos
                     // this.pushEvent("pause-video", {});
                     color = "#DD2C00"; // paused = red
+                    this.clearPlaybackInterval()
                     break;
-                case 3:
+                case YT.PlayerState.BUFFERING:
                     color = "#AA00FF"; // buffering = purple
+
+                    this.clearPlaybackInterval()
                     break;
-                case 5:
+                case YT.PlayerState.CUED:
                     color = "#FF6DOO"; // video cued = orange
                     break;
             }

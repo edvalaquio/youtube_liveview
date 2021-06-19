@@ -44,6 +44,15 @@ defmodule YoutubeLiveviewWeb.VideoLive do
   end
 
   @impl true
+  def handle_event("current-time-video", %{"current_time" => current_time}, socket) do
+    IO.inspect("Current time - #{current_time}; From client - #{socket.id}",
+      label: "current-time-video event"
+    )
+
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info(
         %Phoenix.Socket.Broadcast{
           event: "load-client-video",
