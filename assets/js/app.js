@@ -2,8 +2,6 @@
 // The MiniCssExtractPlugin is used to separate it out into
 // its own CSS file.
 import "../css/app.scss"
-
-//   <!-- Our project just needs Font Awesome solid + brand -->
 import "../node_modules/@fortawesome/fontawesome-free/js/all.js"
 
 // webpack automatically bundles all modules in your
