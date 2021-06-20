@@ -3,6 +3,9 @@
 // its own CSS file.
 import "../css/app.scss"
 
+//   <!-- Our project just needs Font Awesome solid + brand -->
+import "../node_modules/@fortawesome/fontawesome-free/js/all.js"
+
 // webpack automatically bundles all modules in your
 // entry points. Those entry points can be configured
 // in "webpack.config.js".
