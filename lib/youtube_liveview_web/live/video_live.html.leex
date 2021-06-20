@@ -1,13 +1,5 @@
-<section class="phx-hero">
-  <h1>
-    <%= gettext "Welcome to %{name}!" , name: "Phoenix" %>
-  </h1>
-  <p>Peace of mind from prototype to production</p>
-  <form phx-submit="load-video">
-    <input type="text" name="data" value="<%= @data %>" placeholder="Embed a video" autocomplete="off" />
-    <button type="submit" phx-disable-with="Embedding...">Embed a video</button>
-  </form>
-  <div id="cool-dom-bro" phx-hook="Sample">
+<section class="flex flex-col justify-center mt-4">
+  <div id="cool-dom-bro" class="flex justify-center" phx-hook="Sample">
     <iframe
       id="existing-iframe-example"
       width="640"
@@ -18,7 +10,51 @@
     >
     </iframe>
   </div>
-  <button phx-click="play-video">Play video</button>
-  <button phx-click="pause-video">Pause video</button>
-
+  <div class="flex justify-center">
+    <form class="flex m-4" phx-submit="load-video">
+    	<input
+        type="text"
+        name="data"
+        value="<%= @data %>"
+        class="p-2 text-gray-800 border border-gray-500 mr-2"
+        placeholder="Embed a video"
+      />
+      <button
+        type="submit"
+        class="p-2 text-gray-800 font-bold border border-gray-500"
+      >
+        Gora
+      </button>
+    </form>
+  </div>
+  <div name="playback" class="flex w-full p-8">
+    <button
+      name="playback-play"
+      class="p-2 pr-4 pl-4 mr-0 text-gray-800 border border-r-0 border-gray-500"
+      phx-click="play-video"
+    >
+      <i class="fas fa-play"></i>
+    </button>
+    <button
+      name="playback-pause"
+      class="p-2 pr-4 pl-4 text-gray-800 border border-gray-500"
+      phx-click="pause-video"
+    >
+      <i class="fas fa-pause"></i>
+    </button>
+    <div class="p-2 w-full bg-red-100	flex items-center">
+      <span class="relative h-full">
+        <div
+          name="playback-ticker"
+          class="h-full w-7 rounded-full bg-green-100 text-2xl font-extrabold absolute"
+        >
+        </div>
+      </span>
+      <div
+        name="playback-bar"
+        class="h-1 mr-3.5 ml-3.5	 w-full bg-black object-center"
+      >
+      </div>
+    </div>
+  </div>
 </section>
