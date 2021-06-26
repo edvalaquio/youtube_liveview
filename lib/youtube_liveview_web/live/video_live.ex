@@ -7,13 +7,14 @@ defmodule YoutubeLiveviewWeb.VideoLive do
   def mount(_params, _session, socket) do
     YoutubeLiveviewWeb.Endpoint.subscribe("room:abc123")
 
-    assigns = [data: @default_youtube_url]
-
     {
       :ok,
       socket
-      |> push_event("client-load-video-event", %{})
-      |> assign(assigns)
+      |> assign(
+        data: @default_youtube_url,
+        current_time: get_formatted_time(0),
+        total_video_time: get_formatted_time(0)
+      )
     }
   end
 
@@ -26,7 +27,6 @@ defmodule YoutubeLiveviewWeb.VideoLive do
     {
       :noreply,
       socket
-      # |> push_event("client-load-video-event", %{})
       |> assign(assigns)
     }
   end
@@ -54,16 +54,18 @@ defmodule YoutubeLiveviewWeb.VideoLive do
         "client-video-metadata-event",
         %{
           "current_time" => current_time,
-          "duration" => duration
+          "total_video_time" => total_video_time
         },
         socket
       ) do
-    IO.inspect(
-      "Playing - #{current_time}/#{duration} ; From client - #{socket.id}",
-      label: "client-video-metadata-event"
-    )
-
-    {:noreply, socket}
+    {
+      :noreply,
+      socket
+      |> assign(
+        current_time: current_time |> trunc |> get_formatted_time,
+        total_video_time: total_video_time |> trunc |> get_formatted_time
+      )
+    }
   end
 
   @impl true
@@ -77,7 +79,6 @@ defmodule YoutubeLiveviewWeb.VideoLive do
     {
       :noreply,
       socket
-      |> push_event("client-load-video-event", %{})
       |> assign(assigns)
     }
   end
@@ -104,4 +105,11 @@ defmodule YoutubeLiveviewWeb.VideoLive do
       nil -> ""
     end
   end
+
+  def get_formatted_time(raw_time) do
+    "#{div(raw_time, 60)}:#{get_formatted_seconds(rem(raw_time, 60))}"
+  end
+
+  defp get_formatted_seconds(s) when s < 10, do: "0#{s}"
+  defp get_formatted_seconds(s), do: "#{s}"
 end

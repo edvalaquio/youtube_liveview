@@ -25,33 +25,44 @@ topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
+var iframeScriptTag = document.createElement('script');
+iframeScriptTag.id = 'iframe-demo';
+iframeScriptTag.src = 'https://www.youtube.com/iframe_api';
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(iframeScriptTag, firstScriptTag);
 
 // FIXME: Place in a separate file
-
 var Hooks = {}
 Hooks.Sample = {
     mounted() {
-        setMediaPlayer(this);
-        setMediaPlaybackEventHandler(this);
+        window.onYouTubeIframeAPIReady = () => {
+            initMediaPlayer(this);
+        }
     },
-    beforeUpdate() {
-        setMediaPlayer(this);
-        setMediaPlaybackEventHandler(this);
-    }
 }
 
+var _mediaPlayer;
+var _mediaPlayerInterval;
 
-let _mediaPlayer;
-let _mediaPlayerInterval;
+function initMediaPlayer(mediaEventHandler) {
+    _mediaPlayer = new YT.Player("existing-iframe-example");
 
-function setMediaPlayer(mediaEventHandler) {
-    const mediaPlayer = new YT.Player("existing-iframe-example");
-
-    mediaPlayer.addEventListener("onReady", (_event) => {
+    _mediaPlayer.addEventListener("onReady", (_event) => {
+        // TODO: Send event that will enable button once ready
         document.getElementById("existing-iframe-example").style.borderColor = "#FF6D00";
+
+        mediaEventHandler.pushEvent(
+            "client-video-metadata-event",
+            {
+                url: _mediaPlayer.getVideoUrl(),
+                current_time: _mediaPlayer.getCurrentTime(),
+                total_video_time: _mediaPlayer.getDuration(),
+            });
+
+        setClientPlaybackEvent(mediaEventHandler)
     });
 
-    mediaPlayer.addEventListener("onStateChange", (event) => {
+    _mediaPlayer.addEventListener("onStateChange", (event) => {
         const playerStatus = event.data
         console.log(`mediaPlayer status changed ${playerStatus}`)
 
@@ -64,26 +75,10 @@ function setMediaPlayer(mediaEventHandler) {
                 color = "#FFFF00"; // ended = yellow
                 break;
             case YT.PlayerState.PLAYING:
-                // NOTE: We can use this video state to pause and play videos.
-                // pros: No need to create custom buttons
-                // cons: Longer delay in playing videos
-                // this.pushEvent("play-video", {});
                 color = "#33691E"; // playing = green
-                _mediaPlayerInterval = setInterval(
-                    () => {
-                        mediaEventHandler.pushEvent(
-                            "client-video-metadata-event",
-                            {
-                                current_time: getMediaPlayer().getCurrentTime(),
-                                duration: getMediaPlayer().getDuration(),
-                            })
-                    }, 1000);
+                setClientPlaybackInterval(mediaEventHandler)
                 break;
             case YT.PlayerState.PAUSED:
-                // NOTE: We can use this video state to pause and play videos.
-                // pros: No need to create custom buttons
-                // cons: Longer delay in playing videos
-                // this.pushEvent("pause-video", {});
                 color = "#DD2C00"; // paused = red
                 clearInterval(_mediaPlayerInterval);
                 break;
@@ -102,29 +97,37 @@ function setMediaPlayer(mediaEventHandler) {
 
     });
 
-    mediaPlayer.addEventListener("onError", (event) => {
+    _mediaPlayer.addEventListener("onError", (event) => {
         console.error(event.data)
     });
-
-    _mediaPlayer = mediaPlayer;
 }
 
-function getMediaPlayer() { return _mediaPlayer }
-
-function setMediaPlaybackEventHandler(mediaEventHandler) {
+function setClientPlaybackEvent(mediaEventHandler) {
     mediaEventHandler.handleEvent(
         "client-playback-event",
         ({ "action": action }) => {
             console.log(`playback-event event called with action - ${action}}`);
             switch (action) {
                 case "play":
-                    getMediaPlayer().playVideo();
+                    _mediaPlayer.playVideo();
                     break;
                 case "pause":
-                    getMediaPlayer().pauseVideo();
+                    _mediaPlayer.pauseVideo();
                     break;
             }
         })
+}
+
+function setClientPlaybackInterval(mediaEventHandler) {
+    _mediaPlayerInterval = setInterval(
+        () => mediaEventHandler.pushEvent(
+            "client-video-metadata-event",
+            {
+                url: _mediaPlayer.getVideoUrl(),
+                current_time: _mediaPlayer.getCurrentTime(),
+                total_video_time: _mediaPlayer.getDuration(),
+            }
+        ), 1000);
 }
 
 let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })
