@@ -37,23 +37,31 @@
     </button>
     <button
       name="playback-pause"
-      class="p-2 pr-4 pl-4 text-gray-800 border border-r-0 border-gray-500"
+      class="p-2 pr-4 pl-4
+        border border-r-0 border-gray-500
+        text-gray-800"
       phx-click="pause-video"
     >
       <i class="fas fa-pause"></i>
     </button>
-    <div class="w-full p-2 flex items-center bg-red-100  border border-gray-500">
-      <div class="mr-3.5"><%= @current_time %></div>
-      <div class="w-full flex items-center">
-        <div class="h-7 p-3.5 bg-green-100 rounded-full absolute">
+    <div class="flex items-center w-full p-2
+        bg-red-100 border border-gray-500">
+      <div><%= @current_video_time %></div>
+      <div class="w-full flex flex-col mx-7">
+        <div class="flex items-center relative w-full -mx-3.5">
+          <div
+            name="playback-ticker"
+            class="absolute h-7 mt-1 p-3.5
+              border border-gray-900 rounded-full
+              bg-gray-900 bg-opacity-50"
+            style="left: <%=@progress_time%>%"
+          >
+          </div>
         </div>
-        <div
-          name="playback-bar"
-          class="h-1 w-full bg-black object-center mr-3.5 ml-3.5 "
-        >
+        <div name="playback-bar" class="h-1 w-full bg-black">
         </div>
       </div>
-      <div class="ml-3.5"><%= @total_video_time %></div>
+      <div><%= @total_video_time %></div>
     </div>
   </div>
 </section>
