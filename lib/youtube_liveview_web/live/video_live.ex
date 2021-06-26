@@ -1,28 +1,34 @@
 defmodule YoutubeLiveviewWeb.VideoLive do
   use YoutubeLiveviewWeb, :live_view
 
+  @default_youtube_url "https://www.youtube.com/watch?v=e_TxH59MclA"
+
   @impl true
   def mount(_params, _session, socket) do
     YoutubeLiveviewWeb.Endpoint.subscribe("room:abc123")
 
-    assigns = [
-      data: "",
-      embedded_link: create_embedded_link("https://www.youtube.com/watch?v=0eIY5b0RKE0")
-    ]
-
     {
       :ok,
-      assign(socket, assigns)
+      socket
+      |> assign(
+        data: @default_youtube_url,
+        current_time: get_formatted_time(0),
+        total_video_time: get_formatted_time(0)
+      )
     }
   end
 
   @impl true
   def handle_event("load-video", %{"data" => data}, socket) do
-    assigns = [data: data, embedded_link: create_embedded_link(data)]
+    assigns = [data: data]
 
     YoutubeLiveviewWeb.Endpoint.broadcast("room:abc123", "load-client-video", assigns)
 
-    {:noreply, assign(socket, assigns)}
+    {
+      :noreply,
+      socket
+      |> assign(assigns)
+    }
   end
 
   @impl true
@@ -44,12 +50,22 @@ defmodule YoutubeLiveviewWeb.VideoLive do
   end
 
   @impl true
-  def handle_event("current-time-video", %{"current_time" => current_time}, socket) do
-    IO.inspect("Current time - #{current_time}; From client - #{socket.id}",
-      label: "current-time-video event"
-    )
-
-    {:noreply, socket}
+  def handle_event(
+        "client-video-metadata-event",
+        %{
+          "current_time" => current_time,
+          "total_video_time" => total_video_time
+        },
+        socket
+      ) do
+    {
+      :noreply,
+      socket
+      |> assign(
+        current_time: current_time |> trunc |> get_formatted_time,
+        total_video_time: total_video_time |> trunc |> get_formatted_time
+      )
+    }
   end
 
   @impl true
@@ -60,7 +76,11 @@ defmodule YoutubeLiveviewWeb.VideoLive do
         },
         socket
       ) do
-    {:noreply, assign(socket, assigns)}
+    {
+      :noreply,
+      socket
+      |> assign(assigns)
+    }
   end
 
   @impl true
@@ -85,4 +105,11 @@ defmodule YoutubeLiveviewWeb.VideoLive do
       nil -> ""
     end
   end
+
+  def get_formatted_time(raw_time) do
+    "#{div(raw_time, 60)}:#{get_formatted_seconds(rem(raw_time, 60))}"
+  end
+
+  defp get_formatted_seconds(s) when s < 10, do: "0#{s}"
+  defp get_formatted_seconds(s), do: "#{s}"
 end

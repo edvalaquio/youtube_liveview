@@ -25,97 +25,109 @@ topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
+var iframeScriptTag = document.createElement('script');
+iframeScriptTag.id = 'iframe-demo';
+iframeScriptTag.src = 'https://www.youtube.com/iframe_api';
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(iframeScriptTag, firstScriptTag);
+
 // FIXME: Place in a separate file
-let Hooks = {}
+var Hooks = {}
 Hooks.Sample = {
-    clearPlaybackInterval() { clearInterval(this.playbackInterval) },
-    getPlaybackInterval() { return this.playbackInterval },
-    setPlaybackInterval() {
-        this.playbackInterval = setInterval(
-            () => {
-                this.pushEvent(
-                    "current-time-video",
-                    { "current_time": this.getPlayer().getCurrentTime() },
-                )
-            }, 1000)
-    },
-    getPlayer() { return this.player },
-    setPlayer() {
-        this.player = new YT.Player("existing-iframe-example");
-
-        this.player.addEventListener("onReady", (_event) => {
-            document.getElementById("existing-iframe-example").style.borderColor = "#FF6D00";
-        });
-
-        this.player.addEventListener("onStateChange", (event) => {
-            const playerStatus = event.data
-            console.log(`player status changed ${playerStatus}`)
-
-            let color;
-            switch (playerStatus) {
-                case YT.PlayerState.UNSTARTED:
-                    color = "#37474F"; // unstarted = gray
-                    break;
-                case YT.PlayerState.ENDED:
-                    color = "#FFFF00"; // ended = yellow
-                    break;
-                case YT.PlayerState.PLAYING:
-                    // NOTE: We can use this video state to pause and play videos.
-                    // pros: No need to create custom buttons
-                    // cons: Longer delay in playing videos
-                    // this.pushEvent("play-video", {});
-                    color = "#33691E"; // playing = green
-                    // this.playbackInterval = setInterval(
-                    //     () => {
-                    //         // console.log(this.getPlayer().getCurrentTime())
-                    //         this.pushEvent("current-time-video", { "current_time": this.getPlayer().getCurrentTime() })
-                    //     }, 1000)
-                    this.setPlaybackInterval();
-                    break;
-                case YT.PlayerState.PAUSED:
-                    // NOTE: We can use this video state to pause and play videos.
-                    // pros: No need to create custom buttons
-                    // cons: Longer delay in playing videos
-                    // this.pushEvent("pause-video", {});
-                    color = "#DD2C00"; // paused = red
-                    this.clearPlaybackInterval()
-                    break;
-                case YT.PlayerState.BUFFERING:
-                    color = "#AA00FF"; // buffering = purple
-
-                    this.clearPlaybackInterval()
-                    break;
-                case YT.PlayerState.CUED:
-                    color = "#FF6DOO"; // video cued = orange
-                    break;
-            }
-            if (color) {
-                document.getElementById("existing-iframe-example").style.borderColor = color;
-            }
-
-        });
-
-        this.player.addEventListener("onError", (event) => {
-            console.error(event.data)
-        });
-    },
     mounted() {
-        this.setPlayer();
-        this.handleEvent(
-            "client-playback-event",
-            ({ "action": action }) => {
-                console.log(`playback-event event called with action - ${action}}`);
-                switch (action) {
-                    case "play":
-                        this.getPlayer().playVideo();
-                        break;
-                    case "pause":
-                        this.getPlayer().pauseVideo();
-                        break;
-                }
+        window.onYouTubeIframeAPIReady = () => {
+            initMediaPlayer(this);
+        }
+    },
+}
+
+var _mediaPlayer;
+var _mediaPlayerInterval;
+
+function initMediaPlayer(mediaEventHandler) {
+    _mediaPlayer = new YT.Player("existing-iframe-example");
+
+    _mediaPlayer.addEventListener("onReady", (_event) => {
+        // TODO: Send event that will enable button once ready
+        document.getElementById("existing-iframe-example").style.borderColor = "#FF6D00";
+
+        mediaEventHandler.pushEvent(
+            "client-video-metadata-event",
+            {
+                url: _mediaPlayer.getVideoUrl(),
+                current_time: _mediaPlayer.getCurrentTime(),
+                total_video_time: _mediaPlayer.getDuration(),
+            });
+
+        setClientPlaybackEvent(mediaEventHandler)
+    });
+
+    _mediaPlayer.addEventListener("onStateChange", (event) => {
+        const playerStatus = event.data
+        console.log(`mediaPlayer status changed ${playerStatus}`)
+
+        let color;
+        switch (playerStatus) {
+            case YT.PlayerState.UNSTARTED:
+                color = "#37474F"; // unstarted = gray
+                break;
+            case YT.PlayerState.ENDED:
+                color = "#FFFF00"; // ended = yellow
+                break;
+            case YT.PlayerState.PLAYING:
+                color = "#33691E"; // playing = green
+                setClientPlaybackInterval(mediaEventHandler)
+                break;
+            case YT.PlayerState.PAUSED:
+                color = "#DD2C00"; // paused = red
+                clearInterval(_mediaPlayerInterval);
+                break;
+            case YT.PlayerState.BUFFERING:
+                color = "#AA00FF"; // buffering = purple
+
+                clearInterval(_mediaPlayerInterval);
+                break;
+            case YT.PlayerState.CUED:
+                color = "#FF6DOO"; // video cued = orange
+                break;
+        }
+        if (color) {
+            document.getElementById("existing-iframe-example").style.borderColor = color;
+        }
+
+    });
+
+    _mediaPlayer.addEventListener("onError", (event) => {
+        console.error(event.data)
+    });
+}
+
+function setClientPlaybackEvent(mediaEventHandler) {
+    mediaEventHandler.handleEvent(
+        "client-playback-event",
+        ({ "action": action }) => {
+            console.log(`playback-event event called with action - ${action}}`);
+            switch (action) {
+                case "play":
+                    _mediaPlayer.playVideo();
+                    break;
+                case "pause":
+                    _mediaPlayer.pauseVideo();
+                    break;
             }
-        )
-    }
+        })
+}
+
+function setClientPlaybackInterval(mediaEventHandler) {
+    _mediaPlayerInterval = setInterval(
+        () => mediaEventHandler.pushEvent(
+            "client-video-metadata-event",
+            {
+                url: _mediaPlayer.getVideoUrl(),
+                current_time: _mediaPlayer.getCurrentTime(),
+                total_video_time: _mediaPlayer.getDuration(),
+            }
+        ), 1000);
 }
 
 let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })
