@@ -127,7 +127,7 @@ function setClientPlaybackInterval(mediaEventHandler) {
                 current_time: _mediaPlayer.getCurrentTime(),
                 total_video_time: _mediaPlayer.getDuration(),
             }
-        ), 1000);
+        ), 200);
 }
 
 let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })

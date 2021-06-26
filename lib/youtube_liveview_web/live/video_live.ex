@@ -12,8 +12,9 @@ defmodule YoutubeLiveviewWeb.VideoLive do
       socket
       |> assign(
         data: @default_youtube_url,
-        current_time: get_formatted_time(0),
-        total_video_time: get_formatted_time(0)
+        current_video_time: get_formatted_time(0),
+        total_video_time: get_formatted_time(0),
+        progress_time: get_progress_percentage
       )
     }
   end
@@ -53,7 +54,7 @@ defmodule YoutubeLiveviewWeb.VideoLive do
   def handle_event(
         "client-video-metadata-event",
         %{
-          "current_time" => current_time,
+          "current_time" => current_video_time,
           "total_video_time" => total_video_time
         },
         socket
@@ -62,8 +63,9 @@ defmodule YoutubeLiveviewWeb.VideoLive do
       :noreply,
       socket
       |> assign(
-        current_time: current_time |> trunc |> get_formatted_time,
-        total_video_time: total_video_time |> trunc |> get_formatted_time
+        current_video_time: current_video_time |> trunc |> get_formatted_time,
+        total_video_time: total_video_time |> trunc |> get_formatted_time,
+        progress_time: get_progress_percentage(%{ct: current_video_time, tvt: total_video_time})
       )
     }
   end
@@ -105,6 +107,9 @@ defmodule YoutubeLiveviewWeb.VideoLive do
       nil -> ""
     end
   end
+
+  def get_progress_percentage(), do: 0.0
+  def get_progress_percentage(%{ct: ct, tvt: tvt}), do: (ct / tvt * 100) |> Float.round(2)
 
   def get_formatted_time(raw_time) do
     "#{div(raw_time, 60)}:#{get_formatted_seconds(rem(raw_time, 60))}"
