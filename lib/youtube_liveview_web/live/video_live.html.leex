@@ -4,19 +4,19 @@
       id="existing-iframe-example"
       width="640"
       height="360"
-      src="<%= @embedded_link %>?enablejsapi=1"
+      src="<%= create_embedded_link(@data) %>?enablejsapi=1"
       frameborder="0"
       style="border: solid 4px #37474F"
     >
     </iframe>
   </div>
-  <div class="flex justify-center">
-    <form class="flex m-4" phx-submit="load-video">
-    	<input
+  <div class="flex justify-center pt-8 pb-2 pr-8 pl-8">
+    <form class="flex w-full" phx-submit="load-video">
+     <input
         type="text"
         name="data"
         value="<%= @data %>"
-        class="p-2 text-gray-800 border border-gray-500 mr-2"
+        class="w-full mr- p-2 text-gray-800 border border-gray-500 2"
         placeholder="Embed a video"
       />
       <button
@@ -27,34 +27,33 @@
       </button>
     </form>
   </div>
-  <div name="playback" class="flex w-full p-8">
+  <div name="playback" class="flex w-full pt-8 pb-2 pr-8 pl-8">
     <button
       name="playback-play"
-      class="p-2 pr-4 pl-4 mr-0 text-gray-800 border border-r-0 border-gray-500"
+      class="mr-0 p-2 pr-4 pl-4 text-gray-800 border border-gray-500"
       phx-click="play-video"
     >
       <i class="fas fa-play"></i>
     </button>
     <button
       name="playback-pause"
-      class="p-2 pr-4 pl-4 text-gray-800 border border-gray-500"
+      class="p-2 pr-4 pl-4 text-gray-800 border border-r-0 border-gray-500"
       phx-click="pause-video"
     >
       <i class="fas fa-pause"></i>
     </button>
-    <div class="p-2 w-full bg-red-100	flex items-center">
-      <span class="relative h-full">
+    <div class="w-full p-2 flex items-center bg-red-100  border border-gray-500">
+      <div class="mr-3.5"><%= @current_time %></div>
+      <div class="w-full flex items-center">
+        <div class="h-7 p-3.5 bg-green-100 rounded-full absolute">
+        </div>
         <div
-          name="playback-ticker"
-          class="h-full w-7 rounded-full bg-green-100 text-2xl font-extrabold absolute"
+          name="playback-bar"
+          class="h-1 w-full bg-black object-center mr-3.5 ml-3.5 "
         >
         </div>
-      </span>
-      <div
-        name="playback-bar"
-        class="h-1 mr-3.5 ml-3.5	 w-full bg-black object-center"
-      >
       </div>
+      <div class="ml-3.5"><%= @total_video_time %></div>
     </div>
   </div>
 </section>
