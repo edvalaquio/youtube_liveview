@@ -14,7 +14,7 @@ defmodule YoutubeLiveviewWeb.VideoLive do
         data: @default_youtube_url,
         current_video_time: get_formatted_time(0),
         total_video_time: get_formatted_time(0),
-        progress_time: get_progress_percentage
+        progress_time: get_progress_percentage()
       )
     }
   end

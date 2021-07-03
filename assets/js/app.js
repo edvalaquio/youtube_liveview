@@ -25,12 +25,6 @@ topbar.config({ barColors: { 0: "#29d" }, shadowColor: "rgba(0, 0, 0, .3)" })
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
-var iframeScriptTag = document.createElement('script');
-iframeScriptTag.id = 'iframe-demo';
-iframeScriptTag.src = 'https://www.youtube.com/iframe_api';
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(iframeScriptTag, firstScriptTag);
-
 // FIXME: Place in a separate file
 var Hooks = {}
 Hooks.Sample = {
@@ -38,6 +32,12 @@ Hooks.Sample = {
         window.onYouTubeIframeAPIReady = () => {
             initMediaPlayer(this);
         }
+
+        var iframeScriptTag = document.createElement('script');
+        iframeScriptTag.id = 'iframe-demo';
+        iframeScriptTag.src = 'https://www.youtube.com/iframe_api';
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(iframeScriptTag, firstScriptTag);
     },
 }
 
@@ -49,6 +49,7 @@ function initMediaPlayer(mediaEventHandler) {
 
     _mediaPlayer.addEventListener("onReady", (_event) => {
         // TODO: Send event that will enable button once ready
+        console.log("onReady")
         document.getElementById("existing-iframe-example").style.borderColor = "#FF6D00";
 
         mediaEventHandler.pushEvent(
@@ -59,7 +60,19 @@ function initMediaPlayer(mediaEventHandler) {
                 total_video_time: _mediaPlayer.getDuration(),
             });
 
-        setClientPlaybackEvent(mediaEventHandler)
+        mediaEventHandler.handleEvent(
+            "client-playback-event",
+            ({ "action": action }) => {
+                console.log(`playback-event event called with action - ${action}}`);
+                switch (action) {
+                    case "play":
+                        _mediaPlayer.playVideo();
+                        break;
+                    case "pause":
+                        _mediaPlayer.pauseVideo();
+                        break;
+                }
+            });
     });
 
     _mediaPlayer.addEventListener("onStateChange", (event) => {
@@ -68,12 +81,6 @@ function initMediaPlayer(mediaEventHandler) {
 
         let color;
         switch (playerStatus) {
-            case YT.PlayerState.UNSTARTED:
-                color = "#37474F"; // unstarted = gray
-                break;
-            case YT.PlayerState.ENDED:
-                color = "#FFFF00"; // ended = yellow
-                break;
             case YT.PlayerState.PLAYING:
                 color = "#33691E"; // playing = green
                 setClientPlaybackInterval(mediaEventHandler)
@@ -84,7 +91,6 @@ function initMediaPlayer(mediaEventHandler) {
                 break;
             case YT.PlayerState.BUFFERING:
                 color = "#AA00FF"; // buffering = purple
-
                 clearInterval(_mediaPlayerInterval);
                 break;
             case YT.PlayerState.CUED:
@@ -102,22 +108,6 @@ function initMediaPlayer(mediaEventHandler) {
     });
 }
 
-function setClientPlaybackEvent(mediaEventHandler) {
-    mediaEventHandler.handleEvent(
-        "client-playback-event",
-        ({ "action": action }) => {
-            console.log(`playback-event event called with action - ${action}}`);
-            switch (action) {
-                case "play":
-                    _mediaPlayer.playVideo();
-                    break;
-                case "pause":
-                    _mediaPlayer.pauseVideo();
-                    break;
-            }
-        })
-}
-
 function setClientPlaybackInterval(mediaEventHandler) {
     _mediaPlayerInterval = setInterval(
         () => mediaEventHandler.pushEvent(
@@ -127,7 +117,7 @@ function setClientPlaybackInterval(mediaEventHandler) {
                 current_time: _mediaPlayer.getCurrentTime(),
                 total_video_time: _mediaPlayer.getDuration(),
             }
-        ), 200);
+        ), 500);
 }
 
 let liveSocket = new LiveSocket("/live", Socket, { hooks: Hooks, params: { _csrf_token: csrfToken } })
